@@ -1,0 +1,241 @@
+/api/v1/products:
+  post:
+    tags:
+      - Products
+    summary: Create a new product
+    description: Creates a new product in the system
+    security:
+      - ApiKeyAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProductInput'
+    responses:
+      '201':
+        description: Product created successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/Product'
+      '400':
+        description: Bad request - validation error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized - invalid or missing API key
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  get:
+    tags:
+      - Products
+    summary: List all products
+    description: Retrieves a paginated list of products
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: query
+        name: page[number]
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number
+      - in: query
+        name: page[size]
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        description: Number of items per page
+    responses:
+      '200':
+        description: List of products
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Product'
+                meta:
+                  type: object
+                  properties:
+                    total:
+                      type: integer
+                    page:
+                      type: integer
+                    limit:
+                      type: integer
+                    totalPages:
+                      type: integer
+                links:
+                  type: object
+                  properties:
+                    self:
+                      type: string
+                    first:
+                      type: string
+                    last:
+                      type: string
+                    prev:
+                      type: string
+                    next:
+                      type: string
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/api/v1/products/{id}:
+  get:
+    tags:
+      - Products
+    summary: Get a product by ID
+    description: Retrieves a single product by its ID
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Product ID
+    responses:
+      '200':
+        description: Product found
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/Product'
+      '404':
+        description: Product not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  patch:
+    tags:
+      - Products
+    summary: Update a product
+    description: Updates an existing product
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Product ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProductUpdate'
+    responses:
+      '200':
+        description: Product updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/Product'
+      '400':
+        description: Bad request - validation error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Product not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+  delete:
+    tags:
+      - Products
+    summary: Delete a product
+    description: Deletes a product from the system
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Product ID
+    responses:
+      '204':
+        description: Product deleted successfully
+      '404':
+        description: Product not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/health:
+  get:
+    tags:
+      - Health
+    summary: Health check
+    description: Returns the health status of the service
+    security: []
+    responses:
+      '200':
+        description: Service is healthy
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: ok
+                service:
+                  type: string
+                  example: products-service
