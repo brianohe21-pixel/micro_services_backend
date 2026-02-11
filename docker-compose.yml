@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  products-service:
+    build:
+      context: ./products-service
+      dockerfile: Dockerfile
+    container_name: products-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DB_HOST=products-db
+      - DB_PORT=5432
+      - DB_NAME=products_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres123
+      - API_KEY=secret-key-products-123
+      - LOG_LEVEL=info
+    depends_on:
+      products-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DB_HOST=inventory-db
+      - DB_PORT=5432
+      - DB_NAME=inventory_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres123
+      - API_KEY=secret-key-inventory-123
+      - PRODUCTS_SERVICE_URL=http://products-service:3001
+      - PRODUCTS_SERVICE_API_KEY=secret-key-products-123
+      - LOG_LEVEL=info
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+      products-service:
+        condition: service_started
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  products-db:
+    image: postgres:16-alpine
+    container_name: products-db
+    environment:
+      - POSTGRES_DB=products_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - products-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inventory-db:
+    image: postgres:16-alpine
+    container_name: inventory-db
+    environment:
+      - POSTGRES_DB=inventory_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    ports:
+      - "5433:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  products-db-data:
+  inventory-db-data:
